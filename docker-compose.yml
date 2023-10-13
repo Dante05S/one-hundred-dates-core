@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres:15.3-alpine
+    ports:
+      - '0.0.0.0:${DB_PORT:-5432}:5432'
+    environment:
+      POSTGRES_DB: '${DB_NAME}'
+      POSTGRES_USER: '${DB_USER}'
+      POSTGRES_PASSWORD: '${DB_PASS}'
+    volumes:
+      - ./.data/postgres:/var/lib/postgresql/data
+    restart: always
+    networks:
+      - core
+    healthcheck:
+      test: ['CMD', 'postgresql', 'ping']
+networks:
+  core:
+    driver: bridge
