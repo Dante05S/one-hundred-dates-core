@@ -1,21 +1,15 @@
 import type Repository from '../repositories'
-import { type BaseModelAttributes } from '../interfaces/base_model_attributes'
-import { type BaseModelCreation } from '../types/base_model_creation'
 import {
   type Attributes,
   type WhereAttributeHash,
   type Model,
-  type Optional
+  type CreationAttributes
 } from 'sequelize'
 import { NotFoundError } from '../helpers/exceptions_errors'
 import { type MakeNullishOptional } from 'sequelize/types/utils'
 import { type ValuesUpdate } from '../types/values_update'
 
-interface IService<
-  TAttributes extends BaseModelAttributes,
-  TCreation extends Optional<TAttributes, BaseModelCreation>,
-  T extends Model<TAttributes, TCreation>
-> {
+interface IService<T extends Model> {
   create: (body: MakeNullishOptional<T['_creationAttributes']>) => Promise<T>
   getAll: () => Promise<T[]>
   get: (id: string, message: string) => Promise<T>
@@ -27,12 +21,8 @@ interface IService<
   remove: (id: string, message: string) => Promise<void>
 }
 
-export default class Service<
-  TAttributes extends BaseModelAttributes,
-  TCreation extends Optional<TAttributes, BaseModelCreation>,
-  T extends Model<TAttributes, TCreation>,
-  R extends Repository<TAttributes, TCreation, T>
-> implements IService<TAttributes, TCreation, T>
+export default class Service<T extends Model, R extends Repository<T>>
+  implements IService<T>
 {
   protected repository: R
   constructor(repository: R) {
@@ -45,9 +35,7 @@ export default class Service<
    *
    * -----------------------------------------------------------------------
    */
-  async create(
-    body: MakeNullishOptional<T['_creationAttributes']>
-  ): Promise<T> {
+  async create(body: CreationAttributes<T>): Promise<T> {
     const data = await this.repository.create(body)
     return data
   }

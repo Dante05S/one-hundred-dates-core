@@ -1,23 +1,18 @@
+/* eslint-disable @typescript-eslint/ban-types */
 import {
   type ModelStatic,
   type Model,
-  type Optional,
   type Attributes,
-  type WhereAttributeHash
+  type WhereAttributeHash,
+  type CreationAttributes
 } from 'sequelize'
 import { type Options } from '../types/options'
 import { type QueryCount } from '../types/query_count'
 import { type MakeNullishOptional } from 'sequelize/types/utils'
 import { type ValuesUpdate } from '../types/values_update'
 import { type QueryUpdate } from '../types/query_update'
-import { type BaseModelAttributes } from '../interfaces/base_model_attributes'
-import { type BaseModelCreation } from '../types/base_model_creation'
 
-interface IRepository<
-  TAttributes extends BaseModelAttributes,
-  TCreation extends Optional<TAttributes, BaseModelCreation>,
-  T extends Model<TAttributes, TCreation>
-> {
+interface IRepository<T extends Model> {
   getAll: () => Promise<T[]>
   get: (options?: Options<T>) => Promise<T[]>
   getOne: (options?: Options<T>) => Promise<T | null>
@@ -32,12 +27,7 @@ interface IRepository<
   remove: (id: WhereAttributeHash<Attributes<T>['id']>) => Promise<number>
 }
 
-export default class Repository<
-  TAttributes extends BaseModelAttributes,
-  TCreation extends Optional<TAttributes, BaseModelCreation>,
-  T extends Model<TAttributes, TCreation>
-> implements IRepository<TAttributes, TCreation, T>
-{
+export default class Repository<T extends Model> implements IRepository<T> {
   private readonly model: ModelStatic<T>
 
   constructor(model: ModelStatic<T>) {
@@ -106,9 +96,7 @@ export default class Repository<
    *
    * -----------------------------------------------------------------------
    */
-  async create(
-    body: MakeNullishOptional<T['_creationAttributes']>
-  ): Promise<T> {
+  async create(body: CreationAttributes<T>): Promise<T> {
     return await this.model.create(body)
   }
 
