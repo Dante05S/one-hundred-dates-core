@@ -21,18 +21,18 @@ router.post(
   authController.register
 )
 router.post(
-  '/login',
+  '/validate-code',
   publicRoute,
   contentType,
   validateBody(validateLoginSchema()),
-  authController.login
+  authController.validateCode
 )
 router.post(
-  '/request-code',
+  '/login',
   publicRoute,
   contentType,
   validateBody(validateRequestCodeSchema()),
-  authController.requestCode
+  authController.login
 )
 router.post(
   '/resend-code',

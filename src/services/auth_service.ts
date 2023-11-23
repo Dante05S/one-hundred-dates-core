@@ -1,6 +1,10 @@
 import Service from '.'
 import type User from '../database/models/user'
-import { type IUser, type UserCreation } from '../database/models/user'
+import { type RequestCode } from '../database/models/user/dto/RequestCode'
+import { type UserCreate } from '../database/models/user/dto/UserCreate'
+import { type UserLogin } from '../database/models/user/dto/UserLogin'
+import { type UserResLogin } from '../database/models/user/dto/UserResLogin'
+import { type UserResRegister } from '../database/models/user/dto/UserResRegister'
 import {
   BadRequestError,
   NotAuthorizedError,
@@ -8,10 +12,7 @@ import {
   ServerError
 } from '../helpers/exceptions_errors'
 import { createToken } from '../helpers/tokenize'
-import { type Login } from '../interfaces/login'
 import UserRepository from '../repositories/user_repository'
-import { type RequestCode } from '../types/request_code'
-import { type UserQuery } from '../types/user_query'
 import cache from '../utils/cache'
 import { getContentHtml } from '../utils/email_template'
 import { generateCode } from '../utils/generate_code'
@@ -19,18 +20,24 @@ import { sendEmail } from '../utils/nodemailer_service'
 import bcrypt from 'bcrypt'
 
 interface IAuthService {
-  register: (data: UserCreation) => Promise<UserQuery>
-  login: (data: Login) => Promise<{ user: UserQuery; token: string }>
-  requestCode: (data: RequestCode) => Promise<null>
+  register: (data: UserCreate) => Promise<UserResRegister>
+  validateCode: (
+    data: UserLogin
+  ) => Promise<{ user: UserResRegister; token: string }>
+  login: (data: RequestCode) => Promise<UserResLogin>
   resendCode: (email: string) => Promise<null>
 }
 
 class AuthService
-  extends Service<IUser, UserCreation, User, UserRepository>
+  extends Service<User, UserRepository>
   implements IAuthService
 {
   constructor() {
     super(new UserRepository())
+  }
+
+  private async verifyEmail(id: string): Promise<void> {
+    await this.update(id, { email_verification: true }, 'El usuario no existe')
   }
 
   private async generateVerifyCode(email: string, name: string): Promise<void> {
@@ -48,8 +55,18 @@ class AuthService
     cache.set(`code_token_${email}`, codeToken)
   }
 
-  public async register(data: UserCreation): Promise<UserQuery> {
-    const user = await this.create({ ...data, email: data.email.toLowerCase() })
+  public async register(data: UserCreate): Promise<UserResRegister> {
+    // Validate if user exist by name and email
+    await Promise.all([
+      this.repository.existUserByName(data.name),
+      this.repository.existUserByEmail(data.email)
+    ])
+
+    const user = await this.create({
+      ...data,
+      name: data.name,
+      email: data.email.toLowerCase()
+    })
     await this.generateVerifyCode(user.email, user.name)
     return {
       id: user.id,
@@ -58,9 +75,11 @@ class AuthService
     }
   }
 
-  public async login(data: Login): Promise<{ user: UserQuery; token: string }> {
-    const email = data.email.toLowerCase()
-    const keyCache = `code_token_${email}`
+  public async validateCode(
+    data: UserLogin
+  ): Promise<{ user: UserResRegister; token: string }> {
+    const email = data.email
+    const keyCache = `code_token_${email.toLowerCase()}`
 
     const codeCache = cache.get(keyCache)
     if (codeCache === undefined) {
@@ -74,6 +93,9 @@ class AuthService
     const user = await this.repository.getUserByEmail(email)
     const token = createToken(user.id)
     cache.delete(keyCache)
+
+    await this.verifyEmail(user.id)
+
     return {
       user: {
         id: user.id,
@@ -84,19 +106,40 @@ class AuthService
     }
   }
 
-  public async requestCode(data: RequestCode): Promise<null> {
-    const user = await this.repository.getUserByEmail(data.email.toLowerCase())
+  public async login(data: RequestCode): Promise<UserResLogin> {
+    const user = await this.repository.getUserByEmail(data.email, true)
     if (!bcrypt.compareSync(data.password, user.password)) {
       throw new NotAuthorizedError('La contraseña es incorrecta')
     }
 
-    await this.generateVerifyCode(user.email, user.name)
-    return null
+    if (!user.email_verification) {
+      await this.generateVerifyCode(user.email, user.name)
+      return {
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          email_verification: user.email_verification
+        },
+        token: null
+      }
+    }
+
+    const token = createToken(user.id)
+    return {
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        email_verification: user.email_verification
+      },
+      token
+    }
   }
 
   public async resendCode(email: string): Promise<null> {
-    const user = await this.repository.getUserByEmail(email.toLowerCase())
-    await this.generateVerifyCode(user.email, user.name)
+    const user = await this.repository.getUserByEmail(email)
+    await this.generateVerifyCode(user.email.toLowerCase(), user.name)
     return null
   }
 }

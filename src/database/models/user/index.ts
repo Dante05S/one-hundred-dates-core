@@ -1,4 +1,4 @@
-import { DataTypes, type Optional } from 'sequelize'
+import { DataTypes } from 'sequelize'
 import {
   Table,
   Column,
@@ -10,20 +10,19 @@ import {
   Unique
 } from 'sequelize-typescript'
 import bcrypt from 'bcrypt'
-import { type BaseModelAttributes } from '../../interfaces/base_model_attributes'
-import { type BaseModelCreation } from '../../types/base_model_creation'
-import sequelize from '../connection'
+import { type BaseModelAttributes } from '../../../interfaces/base_model_attributes'
+import sequelize from '../../connection'
+import { type UserCreate } from './dto/UserCreate'
 
 export interface IUser extends BaseModelAttributes {
   name: string
   email: string
   password: string
+  email_verification: boolean
 }
 
-export interface UserCreation extends Optional<IUser, BaseModelCreation> {}
-
 @Table({ modelName: 'users' })
-class User extends Model<IUser, UserCreation> {
+class User extends Model<IUser, UserCreate> {
   @PrimaryKey
   @Column({
     allowNull: false,
@@ -59,6 +58,12 @@ class User extends Model<IUser, UserCreation> {
   set password(value: string) {
     this.setDataValue('password', bcrypt.hashSync(value, 12))
   }
+
+  @Column({
+    allowNull: false,
+    defaultValue: false
+  })
+  email_verification!: boolean
 
   @CreatedAt
   created_at!: Date
