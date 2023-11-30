@@ -7,21 +7,23 @@ import {
   CreatedAt,
   UpdatedAt,
   DeletedAt,
-  Unique
+  Unique,
+  HasOne
 } from 'sequelize-typescript'
 import bcrypt from 'bcrypt'
 import { type BaseModelAttributes } from '../../../interfaces/base_model_attributes'
-import sequelize from '../../connection'
 import { type UserCreate } from './dto/UserCreate'
+import CodeToken from '../codeToken'
 
 export interface IUser extends BaseModelAttributes {
   name: string
   email: string
   password: string
   email_verification: boolean
+  code_token: CodeToken
 }
 
-@Table({ modelName: 'users' })
+@Table({ modelName: 'users', paranoid: false })
 class User extends Model<IUser, UserCreate> {
   @PrimaryKey
   @Column({
@@ -65,6 +67,9 @@ class User extends Model<IUser, UserCreate> {
   })
   email_verification!: boolean
 
+  @HasOne(() => CodeToken, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+  code_token!: CodeToken
+
   @CreatedAt
   created_at!: Date
 
@@ -74,7 +79,5 @@ class User extends Model<IUser, UserCreate> {
   @DeletedAt
   deleted_at!: Date
 }
-
-sequelize.addModels([User])
 
 export default User

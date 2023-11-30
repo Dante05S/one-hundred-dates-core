@@ -1,5 +1,8 @@
 // Database connection
 import sequelize from './connection'
+import models from './models'
+
+sequelize.addModels(models)
 
 // Sync database
 
