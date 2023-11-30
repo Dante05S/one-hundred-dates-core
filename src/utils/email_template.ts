@@ -1,4 +1,4 @@
-export const getContentHtml = (name: string, code: number): string => {
+export const getContentHtml = (name: string, code: string): string => {
   return `
     <table style="width:100%;margin:auto">
       <tbody style="font-family:'Segoe UI','Segoe UI Web (West European)','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,'Helvetica Neue',sans-serif">

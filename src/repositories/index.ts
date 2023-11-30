@@ -28,7 +28,7 @@ interface IRepository<T extends Model> {
 }
 
 export default class Repository<T extends Model> implements IRepository<T> {
-  private readonly model: ModelStatic<T>
+  protected readonly model: ModelStatic<T>
 
   constructor(model: ModelStatic<T>) {
     this.model = model

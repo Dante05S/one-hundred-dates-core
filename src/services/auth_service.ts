@@ -5,19 +5,13 @@ import { type UserCreate } from '../database/models/user/dto/UserCreate'
 import { type UserLogin } from '../database/models/user/dto/UserLogin'
 import { type UserResLogin } from '../database/models/user/dto/UserResLogin'
 import { type UserResRegister } from '../database/models/user/dto/UserResRegister'
-import {
-  BadRequestError,
-  NotAuthorizedError,
-  PermissionDeniedError,
-  ServerError
-} from '../helpers/exceptions_errors'
+import { NotAuthorizedError, ServerError } from '../helpers/exceptions_errors'
 import { createToken } from '../helpers/tokenize'
 import UserRepository from '../repositories/user_repository'
-import cache from '../utils/cache'
 import { getContentHtml } from '../utils/email_template'
-import { generateCode } from '../utils/generate_code'
 import { sendEmail } from '../utils/nodemailer_service'
 import bcrypt from 'bcrypt'
+import CodeTokenService from './code_token_service'
 
 interface IAuthService {
   register: (data: UserCreate) => Promise<UserResRegister>
@@ -40,8 +34,14 @@ class AuthService
     await this.update(id, { email_verification: true }, 'El usuario no existe')
   }
 
-  private async generateVerifyCode(email: string, name: string): Promise<void> {
-    const codeToken = generateCode()
+  private async generateVerifyCode(
+    email: string,
+    name: string,
+    idUser: string
+  ): Promise<void> {
+    const codeTokenService = new CodeTokenService()
+    const codeToken = await codeTokenService.generate(idUser)
+
     const contentHtml = getContentHtml(name, codeToken)
     const [success, message] = await sendEmail(
       `'ABS Mailer' <${process.env.NODEMAILER_EMAIL ?? ''}>`,
@@ -52,7 +52,6 @@ class AuthService
     if (!success) {
       throw new ServerError(message)
     }
-    cache.set(`code_token_${email}`, codeToken)
   }
 
   public async register(data: UserCreate): Promise<UserResRegister> {
@@ -67,7 +66,7 @@ class AuthService
       name: data.name,
       email: data.email.toLowerCase()
     })
-    await this.generateVerifyCode(user.email, user.name)
+    await this.generateVerifyCode(user.email, user.name, user.id)
     return {
       id: user.id,
       name: user.name,
@@ -79,21 +78,12 @@ class AuthService
     data: UserLogin
   ): Promise<{ user: UserResRegister; token: string }> {
     const email = data.email
-    const keyCache = `code_token_${email.toLowerCase()}`
-
-    const codeCache = cache.get(keyCache)
-    if (codeCache === undefined) {
-      throw new PermissionDeniedError('El codigo de verificación ha expirado')
-    }
-
-    if (String(codeCache) !== data.code_token) {
-      throw new BadRequestError('El codigo de verificación es incorrecto')
-    }
-
     const user = await this.repository.getUserByEmail(email)
-    const token = createToken(user.id)
-    cache.delete(keyCache)
 
+    const codeTokenService = new CodeTokenService()
+    await codeTokenService.verify(user.id, data.code_token)
+
+    const token = createToken(user.id)
     await this.verifyEmail(user.id)
 
     return {
@@ -113,7 +103,7 @@ class AuthService
     }
 
     if (!user.email_verification) {
-      await this.generateVerifyCode(user.email, user.name)
+      await this.generateVerifyCode(user.email, user.name, user.id)
       return {
         user: {
           id: user.id,
@@ -139,7 +129,7 @@ class AuthService
 
   public async resendCode(email: string): Promise<null> {
     const user = await this.repository.getUserByEmail(email)
-    await this.generateVerifyCode(user.email.toLowerCase(), user.name)
+    await this.generateVerifyCode(user.email.toLowerCase(), user.name, user.id)
     return null
   }
 }
