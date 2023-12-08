@@ -6,11 +6,7 @@ import jwt, {
 import { ResponseCode, error, http } from '../helpers/request'
 import { type NextFunction, type Request, type Response } from 'express'
 import { type TokenPayload } from '../interfaces/token_payload.interface'
-
-interface CustomRequest extends Request {
-  user_id: string
-  token: string
-}
+import { type CustomRequest } from '../interfaces/custom_request'
 
 export const authenticate = (
   req: Request,
@@ -37,8 +33,8 @@ export const authenticate = (
       process.env.TOKEN_SECRET_KEY ?? ''
     ) as TokenPayload
 
-    (req as CustomRequest).token = token;
-    (req as CustomRequest).user_id = payload.user_id
+    (req as unknown as CustomRequest).token = token;
+    (req as unknown as CustomRequest).user_id = payload.user_id
 
     next()
   } catch (e) {

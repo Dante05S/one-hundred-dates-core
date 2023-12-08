@@ -3,9 +3,14 @@ import { type ResponseController } from '../types/ResponseController'
 import { Controller } from '../decorators/Controller'
 import UserService from '../services/user_service'
 import { type UserResRegister } from '../database/models/user/dto/UserResRegister'
+import { type CustomRequest } from '../interfaces/custom_request'
+import { type UserCoupleCode } from '../database/models/user/dto/UserCoupleCode'
 
 interface IUserController {
   getByEmail: (req: Request) => Promise<ResponseController<UserResRegister>>
+  generateCoupleCode: (
+    req: CustomRequest
+  ) => Promise<ResponseController<UserCoupleCode>>
 }
 
 @Controller()
@@ -17,6 +22,15 @@ class UserController implements IUserController {
     const userService = new UserService()
     const user = await userService.getByEmail(email)
     return [user, `User by email ${email}`]
+  }
+
+  public async generateCoupleCode(
+    req: CustomRequest
+  ): Promise<ResponseController<UserCoupleCode>> {
+    const userId = req.user_id
+    const userService = new UserService()
+    const coupleCode = await userService.generateCoupleCode(userId)
+    return [coupleCode, 'Couple Code generated successfully']
   }
 }
 

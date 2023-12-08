@@ -3,8 +3,15 @@ import { Router } from 'express'
 import userController from '../../controllers/user'
 import { publicRoute } from '../../middlewares/publicRoute'
 import { validateParam } from '../../middlewares/validateParam'
+import { authenticate } from '../../middlewares/authenticate'
 
 const router = Router()
+
+router.get(
+  '/generate-couple-code',
+  authenticate,
+  userController.generateCoupleCode
+)
 
 router.get(
   '/:email',

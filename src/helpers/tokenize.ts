@@ -8,7 +8,7 @@ export const createToken = (userId: string): string => {
     user_id: userId,
     pusher_channel: `USER_${userId}`,
     iat: dayjs().unix(),
-    exp: dayjs().add(2, 'minute').endOf('minute').unix()
+    exp: dayjs().add(1, 'month').endOf('month').unix()
   }
   if (process.env.TOKEN_SECRET_KEY === undefined) {
     throw new ServerError('The token secret is required')
