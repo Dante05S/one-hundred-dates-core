@@ -21,6 +21,7 @@ export interface IUser extends BaseModelAttributes {
   password: string
   email_verification: boolean
   code_token: CodeToken
+  temp_couple_code: string | null
 }
 
 @Table({ modelName: 'users', paranoid: false })
@@ -66,6 +67,12 @@ class User extends Model<IUser, UserCreate> {
     defaultValue: false
   })
   email_verification!: boolean
+
+  @Column({
+    allowNull: true,
+    defaultValue: null
+  })
+  temp_couple_code!: string
 
   @HasOne(() => CodeToken, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
   code_token!: CodeToken
