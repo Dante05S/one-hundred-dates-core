@@ -14,6 +14,7 @@ import bcrypt from 'bcrypt'
 import { type BaseModelAttributes } from '../../../interfaces/base_model_attributes'
 import { type UserCreate } from './dto/UserCreate'
 import CodeToken from '../codeToken'
+import Couple from '../couple'
 
 export interface IUser extends BaseModelAttributes {
   name: string
@@ -22,6 +23,9 @@ export interface IUser extends BaseModelAttributes {
   email_verification: boolean
   code_token: CodeToken
   temp_couple_code: string | null
+  type_couple: 'a' | 'b' | null
+  couple_a: Couple
+  couple_b: Couple
 }
 
 @Table({ modelName: 'users', paranoid: false })
@@ -68,14 +72,36 @@ class User extends Model<IUser, UserCreate> {
   })
   email_verification!: boolean
 
+  @Unique
   @Column({
     allowNull: true,
     defaultValue: null
   })
   temp_couple_code!: string
 
+  @Column({
+    type: DataTypes.ENUM('a', 'b'),
+    allowNull: true,
+    defaultValue: null
+  })
+  type_couple!: 'a' | 'b'
+
   @HasOne(() => CodeToken, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
   code_token!: CodeToken
+
+  @HasOne(() => Couple, {
+    foreignKey: 'user_a_id',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
+  })
+  couple_a!: Couple
+
+  @HasOne(() => Couple, {
+    foreignKey: 'user_b_id',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
+  })
+  couple_b!: Couple
 
   @CreatedAt
   created_at!: Date

@@ -29,6 +29,11 @@ class UserController implements IUserController {
   ): Promise<ResponseController<UserCoupleCode>> {
     const userId = req.user_id
     const userService = new UserService()
+
+    // Validate if have couple
+    await userService.haveCouple(userId)
+
+    // Generate couple code
     const coupleCode = await userService.generateCoupleCode(userId)
     return [coupleCode, 'Couple Code generated successfully']
   }

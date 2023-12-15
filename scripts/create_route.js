@@ -211,8 +211,6 @@ const createServiceFile = (fileName, withRepository) => {
     '\n' +
     `import type ${pascalCase} from '../database/models/${fileName}'` +
     '\n' +
-    `import { type I${pascalCase}, type ${pascalCase}Creation } from '../database/models/${fileName}'` +
-    '\n' +
     codeImport +
     '\n' +
     `interface I${classService} {` +
@@ -224,9 +222,9 @@ const createServiceFile = (fileName, withRepository) => {
     '\n' +
     `class ${classService}` +
     '\n' +
-    `  extends Service<I${pascalCase}, ${pascalCase}Creation, ${pascalCase}, ${classRepository}>` +
+    `  extends Service<${pascalCase}, ${classRepository}>` +
     '\n' +
-    `  implements  I${classService}` +
+    `  implements I${classService}` +
     '\n' +
     '{' +
     '\n' +
@@ -265,19 +263,11 @@ const createRepositoryFile = (fileName) => {
     `import ${pascalCase} from '../database/models/${fileName}'` +
     '\n' +
     '\n' +
-    `export default class ${classRepository} extends Repository<` +
-    '\n' +
-    `  I${pascalCase},` +
-    '\n' +
-    `  ${pascalCase}Creation,` +
-    '\n' +
-    `  ${pascalCase}` +
-    '\n' +
-    '> {' +
+    `export default class ${classRepository} extends Repository<${pascalCase}> {` +
     '\n' +
     '  constructor() {' +
     '\n' +
-    '    super(User)' +
+    `    super(${pascalCase})` +
     '\n' +
     '  }' +
     '\n' +
