@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 import { type Request, type Response } from 'express'
+import { UniqueConstraintError } from 'sequelize'
 import { CustomError, getStatusByException } from '../helpers/exceptions_errors'
 import { http, ResponseCode } from '../helpers/request'
 
@@ -29,9 +30,11 @@ export function Controller(): Function {
           } catch (e) {
             const statusCode = getStatusByException(e)
             const data = e instanceof CustomError ? e.data : null
-            res
-              .status(statusCode)
-              .json(http.error(data, statusCode, [(e as Error).message]))
+            const errors =
+              e instanceof UniqueConstraintError
+                ? e.errors.map((err) => err.message)
+                : [(e as Error).message]
+            res.status(statusCode).json(http.error(data, statusCode, errors))
           }
         }
       }
