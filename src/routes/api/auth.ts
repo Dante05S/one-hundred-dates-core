@@ -9,35 +9,30 @@ import {
   validateResendCodeSchema
 } from '../../validators/auth_validator'
 import { publicRoute } from '../../middlewares/publicRoute'
-import { contentType } from '../../middlewares/content_type'
 
 const router = Router()
 
 router.post(
   '/register',
   publicRoute,
-  contentType,
   validateBody(validateRegisterSchema()),
   authController.register
 )
 router.post(
   '/validate-code',
   publicRoute,
-  contentType,
   validateBody(validateLoginSchema()),
   authController.validateCode
 )
 router.post(
   '/login',
   publicRoute,
-  contentType,
   validateBody(validateRequestCodeSchema()),
   authController.login
 )
 router.post(
   '/resend-code',
   publicRoute,
-  contentType,
   validateBody(validateResendCodeSchema()),
   authController.resendCode
 )

@@ -1,5 +1,5 @@
 import { type NextFunction, type Request, type Response } from 'express'
-import { ResponseCode, http } from '../helpers/request'
+import { ResponseCode, http, error } from '../helpers/request'
 import Joi from 'joi'
 
 export const validateBody = (schema: Joi.ObjectSchema) => {
@@ -9,6 +9,10 @@ export const validateBody = (schema: Joi.ObjectSchema) => {
     next: NextFunction
   ): Promise<void> => {
     try {
+      if (!http.isApplicationJson(req)) {
+        res.status(ResponseCode.BAD_REQUEST).send(error.contentTypeIsInvalid)
+        return
+      }
       await schema.validateAsync(req.body)
       next()
     } catch (e) {
