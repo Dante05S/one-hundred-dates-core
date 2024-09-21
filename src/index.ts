@@ -1,20 +1,30 @@
-import { AppDataSource } from "./data-source"
-import { User } from "./entity/User"
+import express from 'express'
+import compression from 'compression'
+import cors from 'cors'
+import bodyParser from 'body-parser'
+import apiRouter from './routes'
+import { initDatabase } from './database/connection'
+import helmet from './libs/helmet'
 
-AppDataSource.initialize().then(async () => {
+void initDatabase()
 
-    console.log("Inserting a new user into the database...")
-    const user = new User()
-    user.firstName = "Timber"
-    user.lastName = "Saw"
-    user.age = 25
-    await AppDataSource.manager.save(user)
-    console.log("Saved a new user with id: " + user.id)
+const app = express()
+const port = process.env.PORT ?? 3001
 
-    console.log("Loading users from the database...")
-    const users = await AppDataSource.manager.find(User)
-    console.log("Loaded users: ", users)
+app.use(helmet())
+app.use(cors())
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: true }))
+app.use(compression())
 
-    console.log("Here you can setup and run express / fastify / any other framework.")
+// Routes
+app.use('/api/v1', apiRouter)
 
-}).catch(error => console.log(error))
+// Say hello
+app.get('/', (_req, res) =>
+  res.status(200).json({ message: 'Welcome to one hundred dates!' })
+)
+
+app.listen(port, () => {
+  console.log(`Servidor escuchando en :${port}`)
+})

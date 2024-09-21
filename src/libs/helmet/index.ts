@@ -1,0 +1,474 @@
+import type { IncomingMessage, ServerResponse } from 'http'
+import contentSecurityPolicy, {
+  type ContentSecurityPolicyOptions
+} from './content-security-policy'
+import crossOriginEmbedderPolicy, {
+  type CrossOriginEmbedderPolicyOptions
+} from './cross-origin-embedder-policy'
+import crossOriginOpenerPolicy, {
+  type CrossOriginOpenerPolicyOptions
+} from './cross-origin-opener-policy'
+import crossOriginResourcePolicy, {
+  type CrossOriginResourcePolicyOptions
+} from './cross-origin-resource-policy'
+import originAgentCluster from './origin-agent-cluster'
+import referrerPolicy, { type ReferrerPolicyOptions } from './referrer-policy'
+import strictTransportSecurity, {
+  type StrictTransportSecurityOptions
+} from './strict-transport-security'
+import xContentTypeOptions from './x-content-type-options'
+import xDnsPrefetchControl, {
+  type XDnsPrefetchControlOptions
+} from './x-dns-prefetch-control'
+import xDownloadOptions from './x-download-options'
+import xFrameOptions, { type XFrameOptionsOptions } from './x-frame-options'
+import xPermittedCrossDomainPolicies, {
+  type XPermittedCrossDomainPoliciesOptions
+} from './x-permitted-cross-domain-policies'
+import xPoweredBy from './x-powered-by'
+import xXssProtection from './x-xss-protection'
+
+export type HelmetOptions = {
+  contentSecurityPolicy?: ContentSecurityPolicyOptions | boolean
+  crossOriginEmbedderPolicy?: CrossOriginEmbedderPolicyOptions | boolean
+  crossOriginOpenerPolicy?: CrossOriginOpenerPolicyOptions | boolean
+  crossOriginResourcePolicy?: CrossOriginResourcePolicyOptions | boolean
+  originAgentCluster?: boolean
+  referrerPolicy?: ReferrerPolicyOptions | boolean
+} & (
+  | {
+      strictTransportSecurity?: StrictTransportSecurityOptions | boolean
+      hsts?: never
+    }
+  | {
+      hsts?: StrictTransportSecurityOptions | boolean
+      strictTransportSecurity?: never
+    }
+) &
+  (
+    | { xContentTypeOptions?: boolean; noSniff?: never }
+    | { noSniff?: boolean; xContentTypeOptions?: never }
+  ) &
+  (
+    | {
+        xDnsPrefetchControl?: XDnsPrefetchControlOptions | boolean
+        dnsPrefetchControl?: never
+      }
+    | {
+        dnsPrefetchControl?: XDnsPrefetchControlOptions | boolean
+        xDnsPrefetchControl?: never
+      }
+  ) &
+  (
+    | { xDownloadOptions?: boolean; ieNoOpen?: never }
+    | { ieNoOpen?: boolean; xDownloadOptions?: never }
+  ) &
+  (
+    | { xFrameOptions?: XFrameOptionsOptions | boolean; frameguard?: never }
+    | { frameguard?: XFrameOptionsOptions | boolean; xFrameOptions?: never }
+  ) &
+  (
+    | {
+        xPermittedCrossDomainPolicies?:
+          | XPermittedCrossDomainPoliciesOptions
+          | boolean
+        permittedCrossDomainPolicies?: never
+      }
+    | {
+        permittedCrossDomainPolicies?:
+          | XPermittedCrossDomainPoliciesOptions
+          | boolean
+        xPermittedCrossDomainPolicies?: never
+      }
+  ) &
+  (
+    | { xPoweredBy?: boolean; hidePoweredBy?: never }
+    | { hidePoweredBy?: boolean; xPoweredBy?: never }
+  ) &
+  (
+    | { xXssProtection?: boolean; xssFilter?: never }
+    | { xssFilter?: boolean; xXssProtection?: never }
+  )
+
+type MiddlewareFunction = (
+  req: IncomingMessage,
+  res: ServerResponse,
+  next: (error?: Error) => void
+) => void
+
+interface Helmet {
+  (
+    options?: Readonly<HelmetOptions>
+  ): (
+    req: IncomingMessage,
+    res: ServerResponse,
+    next: (err?: unknown) => void
+  ) => void
+
+  contentSecurityPolicy: typeof contentSecurityPolicy
+  crossOriginEmbedderPolicy: typeof crossOriginEmbedderPolicy
+  crossOriginOpenerPolicy: typeof crossOriginOpenerPolicy
+  crossOriginResourcePolicy: typeof crossOriginResourcePolicy
+  originAgentCluster: typeof originAgentCluster
+  referrerPolicy: typeof referrerPolicy
+  strictTransportSecurity: typeof strictTransportSecurity
+  xContentTypeOptions: typeof xContentTypeOptions
+  xDnsPrefetchControl: typeof xDnsPrefetchControl
+  xDownloadOptions: typeof xDownloadOptions
+  xFrameOptions: typeof xFrameOptions
+  xPermittedCrossDomainPolicies: typeof xPermittedCrossDomainPolicies
+  xPoweredBy: typeof xPoweredBy
+  xXssProtection: typeof xXssProtection
+
+  // Legacy aliases
+  dnsPrefetchControl: typeof xDnsPrefetchControl
+  frameguard: typeof xFrameOptions
+  hidePoweredBy: typeof xPoweredBy
+  hsts: typeof strictTransportSecurity
+  ieNoOpen: typeof xDownloadOptions
+  noSniff: typeof xContentTypeOptions
+  permittedCrossDomainPolicies: typeof xPermittedCrossDomainPolicies
+  xssFilter: typeof xXssProtection
+}
+
+function getMiddlewareFunctionsFromOptions(
+  options: Readonly<HelmetOptions>
+): MiddlewareFunction[] {
+  const result: MiddlewareFunction[] = []
+
+  switch (options.contentSecurityPolicy) {
+    case undefined:
+    case true:
+      result.push(contentSecurityPolicy())
+      break
+    case false:
+      break
+    default:
+      result.push(contentSecurityPolicy(options.contentSecurityPolicy))
+      break
+  }
+
+  switch (options.crossOriginEmbedderPolicy) {
+    case undefined:
+    case false:
+      break
+    case true:
+      result.push(crossOriginEmbedderPolicy())
+      break
+    default:
+      result.push(crossOriginEmbedderPolicy(options.crossOriginEmbedderPolicy))
+      break
+  }
+
+  switch (options.crossOriginOpenerPolicy) {
+    case undefined:
+    case true:
+      result.push(crossOriginOpenerPolicy())
+      break
+    case false:
+      break
+    default:
+      result.push(crossOriginOpenerPolicy(options.crossOriginOpenerPolicy))
+      break
+  }
+
+  switch (options.crossOriginResourcePolicy) {
+    case undefined:
+    case true:
+      result.push(crossOriginResourcePolicy())
+      break
+    case false:
+      break
+    default:
+      result.push(crossOriginResourcePolicy(options.crossOriginResourcePolicy))
+      break
+  }
+
+  switch (options.originAgentCluster) {
+    case undefined:
+    case true:
+      result.push(originAgentCluster())
+      break
+    case false:
+      break
+    default:
+      console.warn(
+        'Origin-Agent-Cluster does not take options. Remove the property to silence this warning.'
+      )
+      result.push(originAgentCluster())
+      break
+  }
+
+  switch (options.referrerPolicy) {
+    case undefined:
+    case true:
+      result.push(referrerPolicy())
+      break
+    case false:
+      break
+    default:
+      result.push(referrerPolicy(options.referrerPolicy))
+      break
+  }
+
+  if ('strictTransportSecurity' in options && 'hsts' in options) {
+    throw new Error(
+      'Strict-Transport-Security option was specified twice. Remove `hsts` to silence this warning.'
+    )
+  }
+  const strictTransportSecurityOption =
+    options.strictTransportSecurity ?? options.hsts
+  switch (strictTransportSecurityOption) {
+    case undefined:
+    case true:
+      result.push(strictTransportSecurity())
+      break
+    case false:
+      break
+    default:
+      result.push(strictTransportSecurity(strictTransportSecurityOption))
+      break
+  }
+
+  if ('xContentTypeOptions' in options && 'noSniff' in options) {
+    throw new Error(
+      'X-Content-Type-Options option was specified twice. Remove `noSniff` to silence this warning.'
+    )
+  }
+  const xContentTypeOptionsOption =
+    options.xContentTypeOptions ?? options.noSniff
+  switch (xContentTypeOptionsOption) {
+    case undefined:
+    case true:
+      result.push(xContentTypeOptions())
+      break
+    case false:
+      break
+    default:
+      console.warn(
+        'X-Content-Type-Options does not take options. Remove the property to silence this warning.'
+      )
+      result.push(xContentTypeOptions())
+      break
+  }
+
+  if ('xDnsPrefetchControl' in options && 'dnsPrefetchControl' in options) {
+    throw new Error(
+      'X-DNS-Prefetch-Control option was specified twice. Remove `dnsPrefetchControl` to silence this warning.'
+    )
+  }
+  const xDnsPrefetchControlOption =
+    options.xDnsPrefetchControl ?? options.dnsPrefetchControl
+  switch (xDnsPrefetchControlOption) {
+    case undefined:
+    case true:
+      result.push(xDnsPrefetchControl())
+      break
+    case false:
+      break
+    default:
+      result.push(xDnsPrefetchControl(xDnsPrefetchControlOption))
+      break
+  }
+
+  if ('xDownloadOptions' in options && 'ieNoOpen' in options) {
+    throw new Error(
+      'X-Download-Options option was specified twice. Remove `ieNoOpen` to silence this warning.'
+    )
+  }
+  const xDownloadOptionsOption = options.xDownloadOptions ?? options.ieNoOpen
+  switch (xDownloadOptionsOption) {
+    case undefined:
+    case true:
+      result.push(xDownloadOptions())
+      break
+    case false:
+      break
+    default:
+      console.warn(
+        'X-Download-Options does not take options. Remove the property to silence this warning.'
+      )
+      result.push(xDownloadOptions())
+      break
+  }
+
+  if ('xFrameOptions' in options && 'frameguard' in options) {
+    throw new Error(
+      'X-Frame-Options option was specified twice. Remove `frameguard` to silence this warning.'
+    )
+  }
+  const xFrameOptionsOption = options.xFrameOptions ?? options.frameguard
+  switch (xFrameOptionsOption) {
+    case undefined:
+    case true:
+      result.push(xFrameOptions())
+      break
+    case false:
+      break
+    default:
+      result.push(xFrameOptions(xFrameOptionsOption))
+      break
+  }
+
+  if (
+    'xPermittedCrossDomainPolicies' in options &&
+    'permittedCrossDomainPolicies' in options
+  ) {
+    throw new Error(
+      'X-Permitted-Cross-Domain-Policies option was specified twice. Remove `permittedCrossDomainPolicies` to silence this warning.'
+    )
+  }
+  const xPermittedCrossDomainPoliciesOption =
+    options.xPermittedCrossDomainPolicies ??
+    options.permittedCrossDomainPolicies
+  switch (xPermittedCrossDomainPoliciesOption) {
+    case undefined:
+    case true:
+      result.push(xPermittedCrossDomainPolicies())
+      break
+    case false:
+      break
+    default:
+      result.push(
+        xPermittedCrossDomainPolicies(xPermittedCrossDomainPoliciesOption)
+      )
+      break
+  }
+
+  if ('xPoweredBy' in options && 'hidePoweredBy' in options) {
+    throw new Error(
+      'X-Powered-By option was specified twice. Remove `hidePoweredBy` to silence this warning.'
+    )
+  }
+  const xPoweredByOption = options.xPoweredBy ?? options.hidePoweredBy
+  switch (xPoweredByOption) {
+    case undefined:
+    case true:
+      result.push(xPoweredBy())
+      break
+    case false:
+      break
+    default:
+      console.warn(
+        'X-Powered-By does not take options. Remove the property to silence this warning.'
+      )
+      result.push(xPoweredBy())
+      break
+  }
+
+  if ('xXssProtection' in options && 'xssFilter' in options) {
+    throw new Error(
+      'X-XSS-Protection option was specified twice. Remove `xssFilter` to silence this warning.'
+    )
+  }
+  const xXssProtectionOption = options.xXssProtection ?? options.xssFilter
+  switch (xXssProtectionOption) {
+    case undefined:
+    case true:
+      result.push(xXssProtection())
+      break
+    case false:
+      break
+    default:
+      console.warn(
+        'X-XSS-Protection does not take options. Remove the property to silence this warning.'
+      )
+      result.push(xXssProtection())
+      break
+  }
+
+  return result
+}
+
+const helmet: Helmet = Object.assign(
+  function helmet(options: Readonly<HelmetOptions> = {}) {
+    // People should be able to pass an options object with no prototype,
+    // so we want this optional chaining.
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (options.constructor?.name === 'IncomingMessage') {
+      throw new Error(
+        'It appears you have done something like `app.use(helmet)`, but it should be `app.use(helmet())`.'
+      )
+    }
+
+    const middlewareFunctions = getMiddlewareFunctionsFromOptions(options)
+
+    return function helmetMiddleware(
+      req: IncomingMessage,
+      res: ServerResponse,
+      next: (err?: unknown) => void
+    ): void {
+      let middlewareIndex = 0
+
+      ;(function internalNext(err?: unknown) {
+        if (err) {
+          next(err)
+          return
+        }
+
+        const middlewareFunction = middlewareFunctions[middlewareIndex]
+        if (middlewareFunction) {
+          middlewareIndex++
+          middlewareFunction(req, res, internalNext)
+        } else {
+          next()
+        }
+      })()
+    }
+  },
+  {
+    contentSecurityPolicy,
+    crossOriginEmbedderPolicy,
+    crossOriginOpenerPolicy,
+    crossOriginResourcePolicy,
+    originAgentCluster,
+    referrerPolicy,
+    strictTransportSecurity,
+    xContentTypeOptions,
+    xDnsPrefetchControl,
+    xDownloadOptions,
+    xFrameOptions,
+    xPermittedCrossDomainPolicies,
+    xPoweredBy,
+    xXssProtection,
+
+    // Legacy aliases
+    dnsPrefetchControl: xDnsPrefetchControl,
+    xssFilter: xXssProtection,
+    permittedCrossDomainPolicies: xPermittedCrossDomainPolicies,
+    ieNoOpen: xDownloadOptions,
+    noSniff: xContentTypeOptions,
+    frameguard: xFrameOptions,
+    hidePoweredBy: xPoweredBy,
+    hsts: strictTransportSecurity
+  }
+)
+
+export default helmet
+
+export {
+  contentSecurityPolicy,
+  crossOriginEmbedderPolicy,
+  crossOriginOpenerPolicy,
+  crossOriginResourcePolicy,
+  originAgentCluster,
+  referrerPolicy,
+  strictTransportSecurity,
+  xContentTypeOptions,
+  xDnsPrefetchControl,
+  xDownloadOptions,
+  xFrameOptions,
+  xPoweredBy,
+  xXssProtection,
+
+  // Legacy aliases
+  strictTransportSecurity as hsts,
+  xContentTypeOptions as noSniff,
+  xDnsPrefetchControl as dnsPrefetchControl,
+  xDownloadOptions as ieNoOpen,
+  xFrameOptions as frameguard,
+  xPermittedCrossDomainPolicies,
+  xPermittedCrossDomainPolicies as permittedCrossDomainPolicies,
+  xPoweredBy as hidePoweredBy,
+  xXssProtection as xssFilter
+}
