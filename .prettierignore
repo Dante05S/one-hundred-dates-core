@@ -5,4 +5,4 @@
 /.cache
 /.dockerignore
 /src/middlewares/authenticate.ts
-/src/middlewares/revalidateAuth.ts
+/src/middlewares/authRefresh.ts

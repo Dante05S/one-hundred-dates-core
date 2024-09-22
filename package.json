@@ -49,7 +49,8 @@
     "lint:fix": "eslint . --fix",
     "create:route": "node scripts/create_route.js",
     "typeorm": "typeorm-ts-node-commonjs",
-    "migration:generate": "npm run typeorm migration:create ./src/database/migrations/%npm_config_name%",
+    "migration:generate": "npm run typeorm migration:generate ./src/database/migrations/$npm_config_name -- -d ./src/database/data-source.ts",
+    "empty-migration": "npm run typeorm migration:create ./src/database/migrations/$npm_config_name",
     "migration:run": "npm run typeorm migration:run -- -d ./src/database/data-source.ts",
     "migration:rollback": "npm run typeorm migration:revert -- -d ./src/database/data-source.ts"
   }

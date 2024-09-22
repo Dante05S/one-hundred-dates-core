@@ -8,13 +8,13 @@ const PATH_REPOSITORIES = 'src/repositories'
 
 const toSnakeCase = (name) => {
   // Remove upper case characters for _
-  let formatName = name.replace(/([a-z])([A-Z])/g, '$1_$2')
+  let formatName = name.replace(/([a-z])([A-Z])/g, '$1-$2')
 
   // Remove - for _
-  formatName = formatName.replace(/-/g, '_').toLowerCase()
+  formatName = formatName.replace(/_/g, '-').toLowerCase()
 
   // Remove initial a final _
-  formatName = formatName.replace(/^_+|_+$/g, '')
+  formatName = formatName.replace(/^-+|-+$/g, '')
 
   // Remove accents, swap ñ for n, etc
   const from = 'ãàáäâáèéëêìíïîõòóöôùúüûñç'
@@ -134,11 +134,11 @@ const createControllerFile = (fileName) => {
   const classController = `${pascalCase}Controller`
   const varController = `${toCamelCase(fileName)}Controller`
 
-  const require = `'../services/${fileName}_service'`
+  const require = `'../services/${fileName}.service'`
   const codeImport = `import ${classService} from ${require}`
 
   const newFileController =
-    "import { type ResponseController } from '../types/ResponseController'" +
+    "import { type ResponseController } from '../types/response-controller'" +
     '\n' +
     "import { Controller } from '../decorators/Controller'" +
     '\n' +
@@ -189,31 +189,25 @@ const createControllerFile = (fileName) => {
 const createServiceFile = (fileName, withRepository) => {
   const pascalCase = toPascalCase(fileName)
   const classService = `${pascalCase}Service`
-  const classRepository = `${pascalCase}Repository`
 
-  const require = `'../repositories/${fileName}_repository'`
-  const codeImport = withRepository
-    ? `import ${classRepository} from ${require}\n`
-    : ''
-
-  const contructor = withRepository
-    ? '  constructor() {' +
-      '\n' +
-      `    super(new ${classRepository}())` +
-      '\n' +
-      '  }' +
-      '\n' +
-      '\n'
-    : ''
+  const contructor =
+    '  constructor() {' +
+    '\n' +
+    `    super(${pascalCase}Repository)` +
+    '\n' +
+    '  }' +
+    '\n' +
+    '\n'
 
   const newFileService =
-    "import Service from '.'" +
+    "import Service, { type IService } from '.'" +
     '\n' +
-    `import type ${pascalCase} from '../database/models/${fileName}'` +
+    `import { type ${pascalCase} } from '../database/entity/${pascalCase}'` +
     '\n' +
-    codeImport +
+    `import { ${pascalCase}Repository } from '../repositories/${fileName}.repository'` +
     '\n' +
-    `interface I${classService} {` +
+    '\n' +
+    `interface I${classService} extends IService<${pascalCase}> {` +
     '\n' +
     '  index: () => { msg: string }' +
     '\n' +
@@ -222,7 +216,7 @@ const createServiceFile = (fileName, withRepository) => {
     '\n' +
     `class ${classService}` +
     '\n' +
-    `  extends Service<${pascalCase}, ${classRepository}>` +
+    `  extends Service<${pascalCase}, typeof ${pascalCase}Repository>` +
     '\n' +
     `  implements I${classService}` +
     '\n' +
@@ -242,7 +236,7 @@ const createServiceFile = (fileName, withRepository) => {
     '\n'
 
   fs.writeFile(
-    `${PATH_SERVICES}/${fileName}_service.ts`,
+    `${PATH_SERVICES}/${fileName}.service.ts`,
     newFileService,
     'utf8',
     (error) => {
@@ -258,23 +252,17 @@ const createRepositoryFile = (fileName) => {
   const classRepository = `${pascalCase}Repository`
 
   const newFileRepository =
-    "import Repository from '.'" +
+    "import { AppDataSource } from '../database/data-source'" +
     '\n' +
-    `import ${pascalCase} from '../database/models/${fileName}'` +
+    `import { ${pascalCase} } from '../database/entity/${pascalCase}'` +
     '\n' +
     '\n' +
-    `export default class ${classRepository} extends Repository<${pascalCase}> {` +
+    `export const ${classRepository} =` +
     '\n' +
-    '  constructor() {' +
-    '\n' +
-    `    super(${pascalCase})` +
-    '\n' +
-    '  }' +
-    '\n' +
-    '}' +
+    `  AppDataSource.getRepository(${pascalCase}).extend({})` +
     '\n'
   fs.writeFile(
-    `${PATH_REPOSITORIES}/${fileName}_repository.ts`,
+    `${PATH_REPOSITORIES}/${fileName}.repository.ts`,
     newFileRepository,
     'utf8',
     (error) => {
@@ -303,7 +291,7 @@ const main = () => {
     createRouteFile(fileName)
     createControllerFile(fileName)
     createServiceFile(fileName, param !== 'wr')
-    if (param !== 'wr') createRepositoryFile(fileName)
+    createRepositoryFile(fileName)
 
     console.log(
       `Route created successfully!!! The route's name is ${fileName.replace(

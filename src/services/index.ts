@@ -5,7 +5,9 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
-  type FindOptionsWhere
+  type FindOptionsWhere,
+  type FindOptionsSelect,
+  type FindOptionsSelectByString
 } from 'typeorm'
 import { NotFoundError } from '../helpers/exceptions-errors'
 import { type QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
@@ -24,7 +26,14 @@ export abstract class BaseAttributes {
 export interface IService<T extends BaseAttributes> {
   create: (body: DeepPartial<T>) => Promise<T>
   getAll: () => Promise<T[]>
-  get: (id: string, message: string) => Promise<T>
+  get: (
+    id: string,
+    message: string,
+    selectOptions:
+      | FindOptionsSelect<T>
+      | FindOptionsSelectByString<T>
+      | undefined
+  ) => Promise<T>
   getOne: (where: FindOptionsWhere<T>, message: string) => Promise<T>
   update: (
     id: string,
@@ -69,8 +78,18 @@ export default class Service<T extends BaseAttributes, R extends Repository<T>>
    *
    * -----------------------------------------------------------------------
    */
-  async get(id: string, message: string): Promise<T> {
-    const data = await this.repository.findOneBy({ id: id as any })
+  async get(
+    id: string,
+    message: string,
+    selectOptions:
+      | FindOptionsSelect<T>
+      | FindOptionsSelectByString<T>
+      | undefined = undefined
+  ): Promise<T> {
+    const data = await this.repository.findOne({
+      where: { id: id as any },
+      select: selectOptions
+    })
 
     // Valida si la data existe
     if (data === null) {

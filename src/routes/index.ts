@@ -1,7 +1,11 @@
 import { Router } from 'express'
+import userRouter from './api/user'
+import authRouter from './api/auth'
 import { ResponseCode, http } from '../helpers/request'
 
 const router = Router()
+router.use('/user', userRouter)
+router.use('/auth', authRouter)
 
 router.get('/', (_req, res) => {
   res.json(

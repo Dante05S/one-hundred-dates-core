@@ -6,3 +6,4 @@
 **/.cache/*
 **/scripts
 **/libs
+**/database/migrations
