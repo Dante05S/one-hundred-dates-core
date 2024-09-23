@@ -24,6 +24,9 @@ export class User extends BaseAttributes {
   @Column({ nullable: true })
   refresh_token!: string
 
+  @Column({ nullable: true })
+  temp_couple_code!: string
+
   @OneToOne(() => CodeToken, (codeToken) => codeToken.user)
   code_token!: CodeToken
 }

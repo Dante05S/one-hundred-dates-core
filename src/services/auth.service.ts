@@ -130,6 +130,11 @@ class AuthService
     const token = createToken(user.id)
     const refreshToken = createRefreshToken(user.id)
 
+    await this.repository.update(
+      { id: user.id },
+      { refresh_token: refreshToken }
+    )
+
     return {
       user: {
         name: user.name,

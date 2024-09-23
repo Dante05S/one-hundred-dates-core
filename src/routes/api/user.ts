@@ -6,5 +6,6 @@ import { authenticate } from '../../middlewares/authenticate'
 const router = Router()
 
 router.get('/', authenticate, userController.get)
+router.get('/generate-couple-code', authenticate, userController.getCoupleCode)
 
 export default router
