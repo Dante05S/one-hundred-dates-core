@@ -9,6 +9,7 @@ import type {
 } from '../database/entity/User/dto/user-register'
 import {
   BadRequestError,
+  NotAuthorizedError,
   NotFoundError,
   ServerError
 } from '../helpers/exceptions-errors'
@@ -18,10 +19,13 @@ import { getContentHtml } from '../utils/get-content-html'
 import { sendEmail } from '../utils/nodemailer-service'
 import type { UserLogin } from '../database/entity/User/dto/user-login'
 import type { TokenUser } from '../database/entity/User/dto/user-token'
+import type { RequestCode } from '../database/entity/User/dto/request-code'
 
 interface IAuthService extends IService<User> {
   refresh: (id: string) => Promise<UserRefresh>
   register: (data: UserRegister) => Promise<UserResRegister>
+  validateCode: (data: UserLogin) => Promise<TokenUser>
+  login: (data: RequestCode) => Promise<UserResRegister>
 }
 
 class AuthService
@@ -133,6 +137,37 @@ class AuthService
       },
       token,
       refresh_token: refreshToken
+    }
+  }
+
+  public async login(data: RequestCode): Promise<UserResRegister> {
+    const { email, password } = data
+
+    const [userEmail, userName] = await Promise.all([
+      this.repository.getUserByEmail(email),
+      this.repository.getUserByName(email)
+    ])
+
+    if (userEmail === null && userName === null) {
+      throw new NotFoundError(
+        'No hay ningun usuario registrado con este email o nombre de usuario'
+      )
+    }
+
+    const user = userEmail ?? userName
+
+    if (!bcrypt.compareSync(password, user?.password ?? '')) {
+      throw new NotAuthorizedError('La contraseña es incorrecta')
+    }
+
+    await this.generateVerifyCode(
+      user?.email ?? '',
+      user?.name ?? '',
+      user?.id ?? ''
+    )
+    return {
+      name: user?.name ?? '',
+      email: user?.email ?? ''
     }
   }
 }

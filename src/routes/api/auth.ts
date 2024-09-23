@@ -5,7 +5,8 @@ import { authRefresh } from '../../middlewares/authRefresh'
 import { publicRoute } from '../../middlewares/publicRouter'
 import {
   validateLoginSchema,
-  validateRegisterSchema
+  validateRegisterSchema,
+  validateRequestCodeSchema
 } from '../../validators/auth'
 import { validateBody } from '../../middlewares/validateBody'
 
@@ -17,6 +18,12 @@ router.post(
   publicRoute,
   validateBody(validateRegisterSchema()),
   authController.register
+)
+router.post(
+  '/login',
+  publicRoute,
+  validateBody(validateRequestCodeSchema()),
+  authController.login
 )
 router.post(
   '/validate-code',

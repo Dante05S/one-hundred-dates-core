@@ -11,6 +11,7 @@ import type {
 } from '../database/entity/User/dto/user-register'
 import type { TokenUser } from '../database/entity/User/dto/user-token'
 import type { UserLogin } from '../database/entity/User/dto/user-login'
+import type { RequestCode } from '../database/entity/User/dto/request-code'
 
 interface IAuthController {
   register: (
@@ -20,6 +21,9 @@ interface IAuthController {
   validateCode: (
     req: Request<ResponseObjectData, any, UserLogin>
   ) => Promise<ResponseController<TokenUser>>
+  login: (
+    req: Request<ResponseObjectData, any, RequestCode>
+  ) => Promise<ResponseController<UserResRegister>>
 }
 
 @Controller()
@@ -49,6 +53,15 @@ class AuthController implements IAuthController {
     const authService = new AuthService()
     const user = await authService.validateCode(data)
     return [user, 'Login user Successfully']
+  }
+
+  public async login(
+    req: Request<ResponseObjectData, any, RequestCode>
+  ): Promise<ResponseController<UserResRegister>> {
+    const data = req.body
+    const authService = new AuthService()
+    const request = await authService.login(data)
+    return [request, 'Login user Successfully']
   }
 }
 
