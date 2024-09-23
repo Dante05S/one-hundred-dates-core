@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
-  type DeepPartial,
   type Repository,
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
   type FindOptionsWhere,
   type FindOptionsSelect,
-  type FindOptionsSelectByString
+  type FindOptionsSelectByString,
+  type ObjectLiteral
 } from 'typeorm'
 import { NotFoundError } from '../helpers/exceptions-errors'
 import { type QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
@@ -24,7 +24,9 @@ export abstract class BaseAttributes {
 }
 
 export interface IService<T extends BaseAttributes> {
-  create: (body: DeepPartial<T>) => Promise<T>
+  create: (
+    body: QueryDeepPartialEntity<T> | Array<QueryDeepPartialEntity<T>>
+  ) => Promise<ObjectLiteral[]>
   getAll: () => Promise<T[]>
   get: (
     id: string,
@@ -34,7 +36,14 @@ export interface IService<T extends BaseAttributes> {
       | FindOptionsSelectByString<T>
       | undefined
   ) => Promise<T>
-  getOne: (where: FindOptionsWhere<T>, message: string) => Promise<T>
+  getOne: (
+    where: FindOptionsWhere<T>,
+    message: string,
+    selectOptions:
+      | FindOptionsSelect<T>
+      | FindOptionsSelectByString<T>
+      | undefined
+  ) => Promise<T>
   update: (
     id: string,
     body: QueryDeepPartialEntity<T>,
@@ -57,9 +66,11 @@ export default class Service<T extends BaseAttributes, R extends Repository<T>>
    *
    * -----------------------------------------------------------------------
    */
-  async create(body: DeepPartial<T>): Promise<T> {
-    const data = await this.repository.save(body)
-    return data
+  async create(
+    body: QueryDeepPartialEntity<T> | Array<QueryDeepPartialEntity<T>>
+  ): Promise<ObjectLiteral[]> {
+    const data = await this.repository.insert(body)
+    return data.generatedMaps
   }
 
   /*
@@ -98,8 +109,15 @@ export default class Service<T extends BaseAttributes, R extends Repository<T>>
     return data
   }
 
-  async getOne(where: FindOptionsWhere<T>, message: string): Promise<T> {
-    const data = await this.repository.findOneBy(where)
+  async getOne(
+    where: FindOptionsWhere<T>,
+    message: string,
+    selectOptions:
+      | FindOptionsSelect<T>
+      | FindOptionsSelectByString<T>
+      | undefined = undefined
+  ): Promise<T> {
+    const data = await this.repository.findOne({ where, select: selectOptions })
 
     // Valida si la data existe
     if (data === null) {
@@ -135,7 +153,7 @@ export default class Service<T extends BaseAttributes, R extends Repository<T>>
    */
   async remove(id: string, message: string): Promise<void> {
     // Find the data
-    await this.get(id, message)
+    await this.get(id, message, ['id'])
 
     // Remove data
     await this.repository.delete(id)
