@@ -6,7 +6,8 @@ import { publicRoute } from '../../middlewares/publicRouter'
 import {
   validateLoginSchema,
   validateRegisterSchema,
-  validateRequestCodeSchema
+  validateRequestCodeSchema,
+  validateResendCodeSchema
 } from '../../validators/auth'
 import { validateBody } from '../../middlewares/validateBody'
 
@@ -30,6 +31,12 @@ router.post(
   publicRoute,
   validateBody(validateLoginSchema()),
   authController.validateCode
+)
+router.post(
+  '/resend-code',
+  publicRoute,
+  validateBody(validateResendCodeSchema()),
+  authController.resendCode
 )
 
 export default router

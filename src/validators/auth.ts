@@ -37,3 +37,9 @@ export const validateRequestCodeSchema = (): Joi.ObjectSchema => {
     password: Joi.string().required()
   })
 }
+
+export const validateResendCodeSchema = (): Joi.ObjectSchema => {
+  return Joi.object({
+    email: Joi.string().email().required()
+  })
+}

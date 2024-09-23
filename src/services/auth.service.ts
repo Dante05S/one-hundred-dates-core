@@ -26,6 +26,7 @@ interface IAuthService extends IService<User> {
   register: (data: UserRegister) => Promise<UserResRegister>
   validateCode: (data: UserLogin) => Promise<TokenUser>
   login: (data: RequestCode) => Promise<UserResRegister>
+  resendCode: (email: string) => Promise<null>
 }
 
 class AuthService
@@ -169,6 +170,14 @@ class AuthService
       name: user?.name ?? '',
       email: user?.email ?? ''
     }
+  }
+
+  public async resendCode(email: string): Promise<null> {
+    const user = await this.repository.getUserByEmail(email)
+    if (user === null)
+      throw new NotFoundError('No hay ningun usuario registrado con este email')
+    await this.generateVerifyCode(user.email, user.name, user.id)
+    return null
   }
 }
 
