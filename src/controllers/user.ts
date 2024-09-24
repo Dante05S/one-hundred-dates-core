@@ -18,11 +18,7 @@ class UserController implements IUserController {
     const userId = req.id
     const service = new UserService()
 
-    const data = await service.get(userId, 'user not found', [
-      'name',
-      'email',
-      'type_couple'
-    ])
+    const data = await service.getUserCouple(userId)
     return [data, 'Get user successfully']
   }
 
@@ -32,7 +28,6 @@ class UserController implements IUserController {
     const userId = req.id
 
     const service = new UserService()
-    console.log(userId)
     const coupleCode = await service.getCoupleCode(userId)
     return [coupleCode, 'Couple code generated successfully']
   }

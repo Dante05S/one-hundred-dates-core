@@ -6,7 +6,7 @@ export const initDatabase = async (): Promise<void> => {
     await AppDataSource.initialize()
     console.log('PostgreSQL Database connected')
   } catch (e) {
-    console.error('PostgreSQL Database error')
+    console.error('PostgreSQL Database error', (e as Error).message)
   }
 }
 

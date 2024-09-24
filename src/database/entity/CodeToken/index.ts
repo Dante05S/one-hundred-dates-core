@@ -11,10 +11,10 @@ export class CodeToken extends BaseAttributes {
   code!: string
 
   @Column({
-    nullable: true,
-    default: null
+    type: 'timestamp',
+    nullable: true
   })
-  expire_at!: Date
+  expire_at!: Date | null
 
   @OneToOne(() => User, (user) => user.code_token)
   @JoinColumn({ name: 'user_id' })

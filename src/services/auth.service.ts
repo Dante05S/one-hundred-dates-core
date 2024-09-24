@@ -20,6 +20,7 @@ import { sendEmail } from '../utils/nodemailer-service'
 import type { UserLogin } from '../database/entity/User/dto/user-login'
 import type { TokenUser } from '../database/entity/User/dto/user-token'
 import type { RequestCode } from '../database/entity/User/dto/request-code'
+import { CoupleRepository } from '../repositories/couple.repository'
 
 interface IAuthService extends IService<User> {
   refresh: (id: string) => Promise<UserRefresh>
@@ -135,11 +136,19 @@ class AuthService
       { refresh_token: refreshToken }
     )
 
+    let couple = null
+    if (user.type_couple)
+      couple = await CoupleRepository.findOne({
+        where: { [`user_${user.type_couple}_id`]: user.id },
+        select: ['id', 'init_date', 'user_a_id', 'user_b_id']
+      })
+
     return {
       user: {
         name: user.name,
         email: user.email,
-        type_couple: user.type_couple
+        type_couple: user.type_couple,
+        couple
       },
       token,
       refresh_token: refreshToken
