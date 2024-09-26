@@ -6,6 +6,7 @@ import type { RequestConnect } from '../database/entity/Couple/dto/request-conne
 import { UserRepository } from '../repositories/user.repository'
 import { NotFoundError } from '../helpers/exceptions-errors'
 import { TypeCouple } from '../enums/type-couple'
+import { notify } from '../libs/pusher/notify'
 
 interface ICoupleService extends IService<Couple> {
   createCouple: (
@@ -56,12 +57,20 @@ class CoupleService
 
     await Promise.all([userAPromise, userBPromise])
 
-    return {
+    const payload = {
       id: coupleCode,
       init_date: (couple as Couple).init_date,
       user_a_id: userId,
       user_b_id: userB.id
     }
+
+    const pusherChannel = `USER_${userB.id}`
+    const pusherMessage = {
+      couple: payload
+    }
+    void notify(pusherChannel, 'connect-couple', pusherMessage)
+
+    return payload
   }
 }
 
