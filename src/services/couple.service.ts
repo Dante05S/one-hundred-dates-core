@@ -39,7 +39,7 @@ class CoupleService
         'No se encontro ningun usuario por ese codigo de pareja'
       )
 
-    const [couple] = await this.create({
+    await this.create({
       id: coupleCode,
       user_a_id: userId,
       user_b_id: userB.id
@@ -59,7 +59,7 @@ class CoupleService
 
     const payload = {
       id: coupleCode,
-      init_date: (couple as Couple).init_date,
+      init_date: null,
       user_a_id: userId,
       user_b_id: userB.id
     }
